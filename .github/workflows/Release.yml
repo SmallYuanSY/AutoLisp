@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Tag 名稱（例如 v1.0.0）"
+        description: "Tag 名稱 (ex. v0.1.0)"
         required: true
         type: string
 
@@ -13,40 +13,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ 取出完整歷史
+      # 1️⃣ 用 PAT 取代 bot-token
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.MY_GITHUB_TOKEN }}
 
-      # 2️⃣ 設定 Git、切 PAT remote
-      - name: Set up Git credentials
-        run: |
-          set -eo pipefail
-          git config --global user.email "github-actions@github.com"
-          git config --global user.name  "github-actions"
-          git remote set-url origin https://x-access-token:${{ secrets.MY_GITHUB_TOKEN }}@github.com/SmallYuanSY/AutoLisp.git
-
-      # 3️⃣ 建立 (覆蓋) Annotated Tag 並推上去
+      # 2️⃣ 建 / 覆蓋 tag 然後 push
       - name: Create / Push Git tag
         run: |
           set -eo pipefail
           TAG="${{ github.event.inputs.tag }}"
-          # 若 tag 已存在就先刪除再重建（可移除這段看你需求）
-          if git rev-parse "$TAG" >/dev/null 2>&1 ; then
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
             git tag -d "$TAG"
             git push --delete origin "$TAG" || true
           fi
           git tag -a "$TAG" -m "Release $TAG"
           git push origin "$TAG"
 
-      # 4️⃣ 打包 ZIP
       - name: Zip project
-        run: |
-          set -eo pipefail
-          zip -r release.zip . -x '*.git*' '*.github*'
+        run: zip -r release.zip . -x '*.git*' '*.github*'
 
-      # 5️⃣ 建立 GitHub Release 並附上 ZIP
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:

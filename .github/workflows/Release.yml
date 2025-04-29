@@ -13,14 +13,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ 用 PAT 取代 bot-token
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.MY_GITHUB_TOKEN }}
-
-      # 2️⃣ 建 / 覆蓋 tag 然後 push
+    
+      - name: Configure Git user            # ← 新增
+        run: |
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name  "github-actions[bot]"
+    
       - name: Create / Push Git tag
         run: |
           set -eo pipefail
@@ -31,7 +34,7 @@ jobs:
           fi
           git tag -a "$TAG" -m "Release $TAG"
           git push origin "$TAG"
-
+    
       - name: Zip project
         run: zip -r release.zip . -x '*.git*' '*.github*'
 

@@ -1,0 +1,11 @@
+(defun c:FHB ( / ent era )
+  (vl-load-com)
+  (princ "\n[連續模式] 請點選圖塊，按 Enter 結束。")
+  (while (setq ent (car (entsel "\n點選要暫時隱藏的圖塊：")))
+    (setq era (entget ent))
+    (redraw (cdr (car era)) 2) ; 2 = 隱藏
+    (princ "\n已暫時隱藏。")
+  )
+  (princ "\n結束 FHB。")
+  (princ)
+)

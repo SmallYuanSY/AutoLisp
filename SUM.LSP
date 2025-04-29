@@ -1,0 +1,48 @@
+(defun at(str ds)
+(setq nq 1 np (strlen str))
+(while (<= nq np)
+(if (= ds (substr str 1 1))(setq np 0 nq nq)(setq nq (1+ nq) str (substr str 2) chk 0))
+))
+(defun realtostr(ct)
+(while (= "0" (substr ct (strlen ct)))
+       (setq ct (substr ct 1 (1- (strlen ct))))
+       (realtostr ct))
+(eval ct))
+
+(defun irtos(ir)
+(if (= 'INT (type ir))(setq st (itoa ir))(setq st (realtostr (rtos ir 2 6))))
+(eval st))
+
+(defun stoir(ri)
+(if (= 0 (at ri "."))(setq ri (atoi ri))(setq ri (atof ri)))
+(eval ri))
+
+(defun C:SUM()
+(setvar "CMDECHO" 0)
+(setq p (ssget) sm 0)
+(if p
+    (progn
+    (setq n (sslength p))
+    (setq k 0)
+    (while (< k n)
+               (if (= "TEXT" (cdr (assoc 0 (setq e (entget (setq ee (ssname p k)))))))
+                 (progn
+                    (setq tat (cdr (setq ttt (assoc 1 e))))
+                    (setq sm (+ sm (stoir tat)))
+                 ))
+         (setq k (+ k 1))
+    )
+    (prompt (strcat "\nSummary : " (irtos sm) "\n"))
+    (while (setq nt2 (entsel "\nSelect Summary text : \n"))
+           (setq at2 (entget (car nt2)))
+            (if (= "TEXT" (cdr (assoc 0 at2)))
+                (progn
+                (setq bt2 (assoc 1 at2))
+                (setq at2 (subst (cons 1 (irtos sm)) bt2 at2))
+                (entmod at2)
+            ))
+    )
+))
+(setvar "CMDECHO" 1)
+)
+

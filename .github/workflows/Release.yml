@@ -1,48 +1,56 @@
+# .github/workflows/release.yml
 name: Manual Release Zip
 
 on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Tag 名稱 (ex. v0.1.0)"
+        description: "Tag 名稱 (例如 v0.1.0)"
         required: true
         type: string
+
+permissions: {}           # ⬅️ 全部權限由 PAT 決定，不再用預設 GITHUB_TOKEN
 
 jobs:
   release:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ 取出完整歷史；用 PAT 取代預設 bot-token
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.MY_GITHUB_TOKEN }}
-    
-      - name: Configure Git user            # ← 新增
+
+      # 2️⃣ 設定 Git 身分（給 annotated tag 用）
+      - name: Configure Git user
         run: |
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local user.name  "github-actions[bot]"
-    
+
+      # 3️⃣ 建立／覆蓋 tag 並推上去
       - name: Create / Push Git tag
         run: |
           set -eo pipefail
           TAG="${{ github.event.inputs.tag }}"
+          # 如果 tag 已存在就刪除再重建（可視需求拿掉）
           if git rev-parse "$TAG" >/dev/null 2>&1; then
             git tag -d "$TAG"
             git push --delete origin "$TAG" || true
           fi
           git tag -a "$TAG" -m "Release $TAG"
           git push origin "$TAG"
-    
+
+      # 4️⃣ 打包 ZIP
       - name: Zip project
         run: zip -r release.zip . -x '*.git*' '*.github*'
 
+      # 5️⃣ 建立 GitHub Release 並附上 ZIP
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.inputs.tag }}
-          name: ${{ github.event.inputs.tag }}
-          files: release.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name:     ${{ github.event.inputs.tag }}
+          files:    release.zip
+          token:    ${{ secrets.MY_GITHUB_TOKEN }}   # ⬅️ 帶上 PAT

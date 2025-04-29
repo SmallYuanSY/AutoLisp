@@ -16,10 +16,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Git
+      - name: Set up Git credentials
         run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "github-actions"
+          git remote set-url origin https://${{ secrets.MY_GITHUB_TOKEN }}@github.com/SmallYuanSY/AutoLisp.git
 
       - name: Create Git tag
         run: |

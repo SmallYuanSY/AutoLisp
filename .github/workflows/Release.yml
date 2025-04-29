@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Tag 名稱（例如 v1.0.0）"
+        description: "輸入 Tag 名稱 (例如 v0.1.0)"
         required: true
         type: string
 
@@ -15,16 +15,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Set up Git
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-
-      - name: Create Git tag
-        run: |
-          git tag ${{ github.event.inputs.tag }}
-          git push origin ${{ github.event.inputs.tag }}
 
       - name: Zip project
         run: |

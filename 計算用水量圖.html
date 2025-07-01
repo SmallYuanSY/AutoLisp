@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>給水量與管徑計算器</title>
+  <style>
+    body{font-family:sans-serif;padding:20px;max-width:900px;margin:auto}
+    table{width:100%;border-collapse:collapse;margin-bottom:20px}
+    th,td{border:1px solid #ccc;padding:4px;text-align:center;font-size:0.9rem}
+    input[type="number"]{width:70px;padding:3px}
+    label{margin-right:8px}
+    pre{background:#f5f5f5;padding:10px;white-space:pre-wrap;font-size:0.9rem}
+    button{padding:6px 20px;margin-top:10px}
+  </style>
+</head>
+<body>
+<h2>給水量與管徑計算器</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>器具</th>
+      <th>公共數量</th>
+      <th>專用數量</th>
+      <th>公共 FU</th>
+      <th>專用 FU</th>
+      <th>曲線</th>
+    </tr>
+  </thead>
+  <tbody id="fixtureBody"></tbody>
+</table>
+
+<label>沖水器具 FU (曲線①)：<input type="number" id="fu1" min="0" step="0.01" value="0" oninput="updateManualFU()"></label>
+<label>普通水栓 FU (曲線②)：<input type="number" id="fu2" min="0" step="0.01" value="0" oninput="updateManualFU()"></label>
+
+<label>安全係數 <input type="number" id="factor" step="0.01" value="1.2"></label>
+<label>流速 V (m/s) <input type="number" id="velocity" step="0.1" value="1.6"></label>
+<button onclick="calc()">計算</button>
+<pre id="result"></pre>
+
+<script>
+// === 器具對照表 ===
+const fixtures=[
+ {n:'馬桶(沖水閥)',p:10,pr:6,cP:1,cR:1},
+ {n:'馬桶(水箱)',p:5,pr:3,cP:2,cR:2},
+ {n:'小便斗(沖水閥)',p:5,pr:2,cP:1,cR:1},
+ {n:'小便斗(水箱)',p:3,pr:1,cP:2,cR:2},
+ {n:'洗面盆',p:2,pr:1,cP:2,cR:2},
+ {n:'洗手盆',p:1,pr:0.5,cP:2,cR:2},
+ {n:'醫療用洗手盆',p:3,pr:0,cP:2,cR:2},
+ {n:'辦公室流理槽',p:3,pr:0,cP:2,cR:2},
+ {n:'廚房流理槽',p:4,pr:3,cP:2,cR:2},
+ {n:'餐廳廚房流理槽',p:4,pr:2,cP:2,cR:2},
+ {n:'化驗室龍頭',p:2,pr:0,cP:2,cR:2},
+ {n:'餐具清潔流理槽',p:5,pr:0,cP:2,cR:2},
+ {n:'洗衣盆',p:4,pr:3,cP:2,cR:2},
+ {n:'洗面槽(每水栓)',p:2,pr:0,cP:2,cR:2},
+ {n:'清潔槽',p:4,pr:3,cP:2,cR:2},
+ {n:'浴缸',p:4,pr:2,cP:2,cR:2},
+ {n:'淋浴室',p:4,pr:2,cP:2,cR:2},
+ {n:'浴室(整組,沖水閥)',p:8,pr:0,cP:1,cR:1},
+ {n:'浴室(整組,水箱)',p:6,pr:0,cP:2,cR:2},
+ {n:'飲水機',p:2,pr:1,cP:2,cR:2},
+ {n:'拖布盆',p:3,pr:0,cP:2,cR:2},
+ {n:'滲水·車庫',p:5,pr:0,cP:2,cR:2}
+];
+
+// === 曲線數據 (FU -> L/min)，索引 0 對應 FU=10，步長 5 ===
+const curve1=[95,120,140,150,160,170,180,185,190,200,215,220,220,230,235,240,245,250,255,260,265,270,275,280,285,290,295,305,310,315,320,330,340,345,350,355,360,365,370,375,380];
+const curve2=[20,30,50,60,70,80,85,90,100,110,115,120,130,135,140,145,150,160,165,170,175,175,180,180,190,190,195,200,205,210,210,215,220,220,225,230,235,235,240,245,250,250,255,260,265,270,275,280,285];
+const baseFU=10,stepFU=5;
+
+function interp(curve,fu){
+  if(fu<=baseFU) return curve[0];
+  const idx=Math.floor((fu-baseFU)/stepFU);
+  if(idx>=curve.length-1) return curve[curve.length-1];
+  const x0=baseFU+idx*stepFU,x1=x0+stepFU;
+  const y0=curve[idx],y1=curve[idx+1];
+  return y0+(y1-y0)*(fu-x0)/(x1-x0);
+}
+
+// === 產生表格 ===
+const body=document.getElementById('fixtureBody');
+fixtures.forEach((f,i)=>{
+ const tr=document.createElement('tr');
+ tr.innerHTML=`<td>${f.n}</td>
+ <td><input type="number" min="0" data-i="${i}" data-t="p" value="0"></td>
+ <td><input type="number" min="0" data-i="${i}" data-t="pr" value="0"></td>
+ <td>${f.p}</td><td>${f.pr}</td><td>${f.cP===1?'①':'②'}</td>`;
+ body.appendChild(tr);
+});
+
+let isManualMode = false;
+
+function sumFU(){
+ if(isManualMode) {
+   // 手動模式：直接讀取輸入框的值
+   const fu1 = parseFloat(document.getElementById('fu1').value) || 0;
+   const fu2 = parseFloat(document.getElementById('fu2').value) || 0;
+   return {fu1,fu2};
+ } else {
+   // 自動計算模式
+   let fu1=0,fu2=0;
+   document.querySelectorAll('input[data-i]').forEach(inp=>{
+     const count=parseFloat(inp.value)||0;
+     const fi=fixtures[inp.dataset.i];
+     const type=inp.dataset.t;
+     const unit=fi[type];
+     const curve= type==='p'?fi.cP:fi.cR;
+     if(curve===1) fu1+=unit*count; else fu2+=unit*count;
+   });
+   document.getElementById('fu1').value=fu1.toFixed(2);
+   document.getElementById('fu2').value=fu2.toFixed(2);
+   return {fu1,fu2};
+ }
+}
+
+function updateManualFU(){
+ isManualMode = true;
+}
+
+document.querySelectorAll('input[data-i]').forEach(inp=>inp.addEventListener('input',function(){
+ isManualMode = false;
+ sumFU();
+}));
+
+function calc(){
+ const {fu1,fu2}=sumFU();
+ const q1=interp(curve1,fu1),q2=interp(curve2,fu2);
+ const Q=q1+q2; // L/min
+ const Qs=Q/60; // L/s
+ const Qm=Qs/1000; // m3/s
+ const k=parseFloat(document.getElementById('factor').value)||1.2;
+ const V=parseFloat(document.getElementById('velocity').value)||1.6;
+ const QmK=Qm*k;
+ const D=1000*Math.sqrt((QmK*4/Math.PI)/V);
+ const std=[13,20,25,40,50,75,100,125,150,200];
+ const adopt=std.find(d=>D<=d)||std[std.length-1];
+ document.getElementById('result').textContent=
+`(一) 查同時使用水量圖曲線①與②，得:
+給水量 Q = ${Q.toFixed(0)} (L/min) = ${Qs.toFixed(2)} (L/sec) = ${Qm.toFixed(5)} (M3/sec)
+(二) 計算管段口徑
+尖峰時段用安全係數 ${k} 計算
+Q × ${k} = ${Qm.toFixed(5)} × ${k} = ${QmK.toFixed(5)} (M3/sec)
+Q = A × V = π / 4 x D² x V  (V = ${V} m/sec)
+D = 1000 × ${Qm.toFixed(5)} × 4 / π / ${V} = ${D.toFixed(2)} mm (採 ${adopt} mm)`;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+;;; VLisp project file [V2.0] Test saved to:[e:\LSP] at:[7/16/2025]
+(VLISP-PROJECT-LIST 
+  :NAME
+  Test
+  :OWN-LIST
+  ("BRKBYB")
+  :FAS-DIRECTORY
+  nil
+  :TMP-DIRECTORY
+  nil
+  :PROJECT-KEYS
+  (:BUILD (:standard))
+  :CONTEXT-ID
+  :AUTOLISP
+)
+;;; EOF

@@ -2,7 +2,7 @@
   (vl-load-com)
   
   (princ "\n=== 文字配對輸出工具 ===")
-  (princ "\n此工具會將文字按行配對並輸出到TXT檔案")
+  (princ "\n此工具會將文字按行配對並追加到TXT檔案")
 
   (setq ytol 10.0)
   (setq doc (vla-get-ActiveDocument (vlax-get-Acad-Object)))
@@ -96,7 +96,7 @@
     (progn
       (princ "\n")
       (princ "\n📋 配對結果預覽：")
-      (princ "\n" (make-string 50 45))
+      (princ "\n--------------------------------------------------")
       (setq i 0)
       (foreach pair pairs
         (setq i (1+ i))
@@ -108,7 +108,7 @@
           )
         )
       )
-      (princ "\n" (make-string 50 45))
+      (princ "\n--------------------------------------------------")
     )
   )
 
@@ -120,9 +120,9 @@
     )
   )
 
-  ;; 寫入文字檔
-  (princ "\n💾 正在寫入檔案...")
-  (setq f (open filepath "w"))
+  ;; 寫入文字檔（改用追加模式）
+  (princ "\n💾 正在追加到檔案...")
+  (setq f (open filepath "a"))
   (if f
     (progn
       (foreach pair sorted
@@ -131,18 +131,18 @@
       (close f)
       
       (princ "\n")
-      (princ "\n" (make-string 60 61))
-      (princ "\n🎉 文字配對輸出完成！")
-      (princ "\n" (make-string 60 61))
+      (princ "\n============================================================")
+      (princ "\n🎉 文字配對追加完成！")
+      (princ "\n============================================================")
       (princ (strcat "\n📁 輸出檔案：" filepath))
       (princ (strcat "\n📊 處理文字：" (itoa (sslength ss)) " 個"))
       (princ (strcat "\n🔗 配對數量：" (itoa (length pairs)) " 組"))
       (princ (strcat "\n📋 分組列數：" (itoa (length rows)) " 列"))
-      (princ "\n" (make-string 60 45))
-      (princ "\n💡 提示：檔案已儲存在圖檔同一目錄")
+      (princ "\n--------------------------------------------------")
+      (princ "\n💡 提示：內容已追加到現有檔案")
     )
     (progn
-      (princ "\n❌ 無法建立輸出檔案")
+      (princ "\n❌ 無法開啟輸出檔案")
       (princ (strcat "\n📁 嘗試路徑：" filepath))
       (princ "\n💡 請檢查目錄權限或磁碟空間")
     )
@@ -152,5 +152,5 @@
 )
 
 (princ "\n✅ TXTEXPORT.lsp 已載入")
-(princ "\n📖 指令：TXTEXPORT - 將選取的文字按位置配對並輸出TXT檔案")
+(princ "\n📖 指令：TXTEXPORT - 將選取的文字按位置配對並追加到TXT檔案")
 (princ)

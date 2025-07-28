@@ -1,0 +1,48 @@
+(setq *last-number* nil)
+(setq *number-entities* nil)
+
+(defun C:AUTONUMBER ( / ss n ent pt input txt)
+  (setq input (getstring "\n請輸入起始數字 (按C重設數字): "))
+  (if (or (= input "C") (= input "c") (null *last-number*))
+    (progn
+      (setq n (getint "\n請輸入新的起始數字: "))
+      (setq *last-number* n)
+      (C:CLEARNUM)
+    )
+    (setq n *last-number*)
+  )
+  (setq ss (ssget))
+  (if ss
+    (progn
+      (setq i 0)
+      (repeat (sslength ss)
+        (setq ent (ssname ss i))
+        (setq pt (cdr (assoc 10 (entget ent))))
+        (command "_.TEXT" "S" "STANDARD" (list (+ (car pt) 20) (cadr pt) 0) 15 0 (rtos n 2 0))
+        (setq txt (entlast))
+        (if (null *number-entities*)
+          (setq *number-entities* (list txt))
+          (setq *number-entities* (cons txt *number-entities*))
+        )
+        (setq n (1+ n))
+        (setq i (1+ i))
+      )
+      (setq *last-number* n)
+    )
+  )
+  (princ)
+)
+
+(defun C:CLEARNUM ( / )
+  (if *number-entities*
+    (progn
+      (foreach ent *number-entities*
+        (if (entget ent)
+          (entdel ent)
+        )
+      )
+      (setq *number-entities* nil)
+    )
+  )
+  (princ)
+) 

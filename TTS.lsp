@@ -36,7 +36,9 @@
 (defun c:RET ( / inputStr startNum ss lst sorted i ent obj pt prefix suffix asteriskPos numStr newText starLen sortOrder len )
   (vl-load-com)
   (princ "輸入樣式會將文字更換成對應格式，只能夠輸入一組**")
-  (setq inputStr (getstring "\n請輸入樣式（使用 ** 表示位數，例如 V1-(**B)）: "))
+  ;; 使用更安全的字符串輸入方式
+  (princ "\n請輸入樣式（使用 ** 表示位數，例如 V1-(**B)）: ")
+  (setq inputStr (read-line))
   (setq asteriskPos (vl-string-search "*" inputStr))
   (if (not asteriskPos)
     (princ "\n樣式中找不到 *，請重新輸入。")
@@ -88,7 +90,9 @@
 ;; RETM - Rename Text with Range Format (e.g., AA-(**~**))
 (defun c:RETM ( / inputStr ss lst sorted i ent obj pt prefix joiner suffix s1 s2 startNum stepNum padZero n1 n2 numStr1 numStr2 pos1 pos2 joinerInput len )
   (vl-load-com)
-  (setq inputStr (getstring "\n請輸入樣式（使用 **~** 或 ***~** 表示區段範圍，例如 AA-(**~**)）: "))
+  ;; 使用更安全的字符串輸入方式
+  (princ "\n請輸入樣式（使用 **~** 或 ***~** 表示區段範圍，例如 AA-(**~**)）: ")
+  (setq inputStr (read-line))
   (if (not (wcmatch inputStr "*`**`**"))
     (progn (princ "\n格式錯誤，請使用兩組連續星號 **~** 或 ***~**。") (exit))
   )
@@ -102,7 +106,9 @@
   (while (= (substr inputStr (+ pos2 s2) 1) "*") (setq s2 (1+ s2)))
   (setq joiner (substr inputStr (+ pos1 s1) (- pos2 (+ pos1 s1))))
   (setq suffix (substr inputStr (+ pos2 s2)))
-  (setq joinerInput (getstring "\n請輸入區段連接符號（例如 ~ 或 -），預設為 -："))
+  ;; 使用更安全的字符串輸入方式
+  (princ "\n請輸入區段連接符號（例如 ~ 或 -），預設為 -：")
+  (setq joinerInput (read-line))
   (if (or (null joinerInput) (= joinerInput "")) (setq joinerInput "-"))
   (initget 7)
   (setq startNum (getint "\n請輸入起始數字（如 1）: "))
@@ -156,7 +162,9 @@
 ;; 例如：將所有選取的文字改為 "XRA**P"，其中 ** 會被替換為原文字
 (defun c:RETX ( / style ss ent obj baseText resultText pos pre suf i len )
   (vl-load-com)
-  (setq style (getstring T "\n請輸入樣式（使用 ** 表示原文字插入位置，例如 XRA**P）: "))
+  ;; 使用更安全的字符串輸入方式
+  (princ "\n請輸入樣式（使用 ** 表示原文字插入位置，例如 XRA**P）: ")
+  (setq style (read-line))
   (setq pos (vl-string-search "**" style))
   (if (not pos)
     (progn (princ "\n格式錯誤，請輸入包含 ** 的樣式。") (exit))
@@ -193,7 +201,9 @@
 ;; 例如：將所有選取的文字改為 "Hello World"
 (defun c:ART ( / newval ss ent obj i len )
   (vl-load-com)
-  (setq newval (getstring T "\n請輸入要套用的文字內容: "))
+  ;; 使用更安全的字符串輸入方式
+  (princ "\n請輸入要套用的文字內容: ")
+  (setq newval (read-line))
   (setq ss (ssget '((0 . "TEXT,MTEXT"))))
   (if ss
     (progn
@@ -218,8 +228,11 @@
 ;; 這個函數會將選取的文字物件中，包含指定的舊文字（oldStr）替換為新的文字（newStr）
 ;; 例如：將所有包含 "AA" 的文字替換為 "BB"
 (defun c:RT ( / ss i ent txt oldStr newStr newtxt)
-  (setq oldStr (getstring "\n請輸入要被替換的文字（如 AA）: "))
-  (setq newStr (getstring "\n請輸入新的文字（如 BB）: "))
+  ;; 使用更安全的字符串輸入方式
+  (princ "\n請輸入要被替換的文字（如 AA）: ")
+  (setq oldStr (read-line))
+  (princ "\n請輸入新的文字（如 BB）: ")
+  (setq newStr (read-line))
 
   (setq ss (ssget '((0 . "TEXT")))) ; 只選 TEXT，若要支援 MTEXT 可擴充
   (if ss

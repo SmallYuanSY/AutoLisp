@@ -1,5 +1,7 @@
 (defun c:SWB ( / blkA blkB pt1 pt2 ss i ename data name blkBname insPt rot scaleX scaleY scaleZ)
   (vl-load-com)
+  ;; 開始 undo group
+  (vla-startundomark (vla-get-activedocument (vlax-get-acad-object)))
 
   (princ "\n請選擇來源圖塊（要被換掉的圖塊）:")
   (setq blkA (car (entsel)))
@@ -55,5 +57,8 @@
   )
 
   (princ "\n替換完成。")
+  
+  ;; 結束 undo group
+  (vla-endundomark (vla-get-activedocument (vlax-get-acad-object)))
   (princ)
 )

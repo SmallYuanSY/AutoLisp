@@ -1,11 +1,12 @@
-
 (defun c:JL ( / dir )
   (initget "X Y")
-  (setq dir (getkword "\n請選擇對齊方向 [X=垂直線,X軸對齊 / Y=水平線,Y軸對齊] <Y>: "))
+  (setq dir (getkword "\n請選擇對齊方向 [X/Y] <Y>: "))
+  (command "._UNDO" "_Group")
   (if (or (not dir) (= dir "Y"))
     (c:JOINPAIR-Y)
     (c:JOINPAIR-X)
   )
+  (command "._UNDO" "_End")
 )
 
 (defun c:JOINPAIR-X ( / tol sel1 sel2 i j e1 e2 y1 y2 y-map pair-list)
@@ -79,5 +80,4 @@
     (command "_.JOIN" (car p) (cadr p) "")
   )
   (prompt (strcat "\n✅ JOINPAIR-Y 成功 JOIN " (itoa (length pair-list)) " 組線段。"))
-  (princ)
 )
